@@ -3,6 +3,7 @@
 Фикс. отправка данных (uint8_t)2ух байт.
 
 Исходники:
+```
 #include <stdio.h>
 #include <stdint.h>
 #include <stddef.h>
@@ -73,4 +74,4 @@ void app_main(void){
         vTaskDelay(pdMS_TO_TICKS(500));
     }
 }
-
+```
