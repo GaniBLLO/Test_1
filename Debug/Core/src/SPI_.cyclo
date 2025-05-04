@@ -1,0 +1,17 @@
+core_cm4.h:1688:22:__NVIC_EnableIRQ	2
+core_cm4.h:1777:22:__NVIC_ClearPendingIRQ	2
+core_cm4.h:1816:22:__NVIC_SetPriority	2
+SPI_.c:17:6:DMA1_Stream3_IRQHandler	1
+SPI_.c:27:6:DMA1_Stream4_IRQHandler	1
+SPI_.c:37:6:SPI2_IRQHandler	5
+SPI_.c:71:6:init_spi_gpio	1
+SPI_.c:134:6:init_spi_DMARx	1
+SPI_.c:177:6:init_spi_DMATx	1
+SPI_.c:218:6:DISABLE_SPI_DMA	1
+SPI_.c:223:6:ENABLE_SPI_DMA	1
+SPI_.c:231:6:init_spi_dma	1
+SPI_.c:244:6:SPI_init	1
+SPI_.c:278:9:SPI_8Tx	3
+SPI_.c:288:6:SPI_16BitTx	3
+SPI_.c:302:6:SPI_DMA_SendData	2
+SPI_.c:320:6:SPI_16BitTxRx	4

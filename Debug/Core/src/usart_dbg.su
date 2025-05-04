@@ -1,0 +1,6 @@
+/home/ganibllo/STM_/TEST/Test_1/CMSIS/inc/core_cm4.h:1688:22:__NVIC_EnableIRQ	16	static
+../Core/src/usart_dbg.c:3:6:debug_usart_init	8	static
+../Core/src/usart_dbg.c:34:6:RS_485_init	4	static
+../Core/src/usart_dbg.c:67:6:USARTx_send_data	16	static
+../Core/src/usart_dbg.c:76:6:USARTx_receive_data	16	static
+../Core/src/usart_dbg.c:85:5:_write	32	static

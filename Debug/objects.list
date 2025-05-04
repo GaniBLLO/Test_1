@@ -1,0 +1,6 @@
+"./CMSIS/src/system_stm32f4xx.o"
+"./Core/src/SPI_.o"
+"./Core/src/main.o"
+"./Core/src/rcc.o"
+"./Core/src/usart_dbg.o"
+"./Startup/startup_stm32f407vetx.o"

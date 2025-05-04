@@ -1,0 +1,17 @@
+/home/ganibllo/STM_/TEST/Test_1/CMSIS/inc/core_cm4.h:1688:22:__NVIC_EnableIRQ	16	static
+/home/ganibllo/STM_/TEST/Test_1/CMSIS/inc/core_cm4.h:1777:22:__NVIC_ClearPendingIRQ	16	static
+/home/ganibllo/STM_/TEST/Test_1/CMSIS/inc/core_cm4.h:1816:22:__NVIC_SetPriority	16	static
+../Core/src/SPI_.c:17:6:DMA1_Stream3_IRQHandler	8	static
+../Core/src/SPI_.c:27:6:DMA1_Stream4_IRQHandler	8	static
+../Core/src/SPI_.c:37:6:SPI2_IRQHandler	16	static
+../Core/src/SPI_.c:71:6:init_spi_gpio	4	static
+../Core/src/SPI_.c:134:6:init_spi_DMARx	8	static
+../Core/src/SPI_.c:177:6:init_spi_DMATx	8	static
+../Core/src/SPI_.c:218:6:DISABLE_SPI_DMA	4	static
+../Core/src/SPI_.c:223:6:ENABLE_SPI_DMA	4	static
+../Core/src/SPI_.c:231:6:init_spi_dma	8	static
+../Core/src/SPI_.c:244:6:SPI_init	8	static
+../Core/src/SPI_.c:278:9:SPI_8Tx	16	static
+../Core/src/SPI_.c:288:6:SPI_16BitTx	24	static
+../Core/src/SPI_.c:302:6:SPI_DMA_SendData	56	static
+../Core/src/SPI_.c:320:6:SPI_16BitTxRx	24	static
