@@ -261,7 +261,6 @@ void SPI_init(void) {
 	SPI2->CR1 |= SPI_CR1_SSM;
 	SPI2->CR1 |= SPI_CR1_SSI;
 
-	//Enb SPI
 #if SPI_2_INTERRUPT_ENB
 	NVIC_SetPriority(SPI2_IRQn, 5);
 	NVIC_EnableIRQ(SPI2_IRQn);
@@ -271,6 +270,7 @@ void SPI_init(void) {
 	SPI2->CR2 |= SPI_CR2_TXDMAEN;
 	init_spi_dma();
 #endif
+	//Enb SPI
 	SPI2->CR1 |= SPI_CR1_SPE;
 }
 

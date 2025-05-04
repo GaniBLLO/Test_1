@@ -62,12 +62,20 @@ void TIM7_IRQHandler(void){
 	if (TIM7->SR & TIM_SR_UIF) {
 		switch (bufferIN[0]) {
 			case ADDR_0X20:
-				if (bufferIN[1])
+				if (bufferIN[1]){
+					err_flag = 1;
 #if SPI_2_INTERRUPT_DMA_ENB
 					bufferOUT[0] = 0xFF;
 #else
 					bufferOUT[1] = 0xFF;
 #endif
+				}
+				break;
+			case ADDR_0X30:
+				if (err_flag)
+					err_cnt++;
+				else
+					err_cnt = 0;
 				break;
 			default:
 				break;
@@ -93,7 +101,6 @@ int main(void) {
     __enable_irq();
 
 	while (1){
-//		LED_15_ON;
 	}
 }
 
