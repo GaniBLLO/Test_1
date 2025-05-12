@@ -12,8 +12,7 @@
 /************************************************************************Functions*/
 void system_clock_168m_25m_hse(void);
 void debug_usart_init(void);
-void SPI_init(void);
-void SPI_16BitTxRx(const uint8_t address, const int16_t data, uint16_t *RxData);
+//void SPI_16BitTxRx(const uint8_t address, const int16_t data, uint16_t *RxData);
 void SPI_DMA_SendData(const uint8_t address, const int16_t *data);
 
 
@@ -39,7 +38,7 @@ void TIM6_DAC_IRQHandler(void) {
 #elif SPI_2_INTERRUPT_DMA_ENB
 	    SPI_DMA_SendData(ADDR_0X30, bufferOUT);
 #else
-		SPI_16BitTxRx(ADDR_0X30, bufferOUT[1], bufferIN);
+	    w5500SPI.TxRx16bit(w5500SPI.regs, ADDR_0X30, bufferOUT[1], bufferIN);
 #endif
 		NVIC_ClearPendingIRQ(TIM6_DAC_IRQn);
 		TIM6->SR &= ~TIM_SR_UIF;
@@ -89,18 +88,28 @@ void TIM7_IRQHandler(void){
 	TIM7->CR1 &= ~TIM_CR1_CEN;
 }
 
+SPI_STRUCT memSPI = SPIx_DEFAULT(SPI1), w5500SPI = SPIx_DEFAULT(SPI2);
+
+
 /************************************************************************MAIN*/
 int main(void) {
     system_clock_168m_25m_hse();
-
     debug_usart_init();
     bufferOUT[0] = 0x55;
+
+    w5500SPI.SPI_InitStruct.SPI_Mode = SPI_MODE_3;
+    w5500SPI.SPI_InitStruct.SPI_MS = SPI_MODE_MASTER;
+    w5500SPI.SPI_InitStruct.SPI_DataSize = SPI_DATA_SIZE_16BIT;
+    w5500SPI.SPI_InitStruct.SPI_CS = SPI_NSS_MODE_1;
+    w5500SPI.init(&w5500SPI);
+    w5500SPI.StartStop(w5500SPI.regs, SPI_ON);
+
     oneSec_timer_init();
     check200ms_timer_init();
-    SPI_init();
     __enable_irq();
 
 	while (1){
+
 	}
 }
 

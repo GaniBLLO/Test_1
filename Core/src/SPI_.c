@@ -8,11 +8,16 @@
 	int16_t bufferOUT[TX_DATA_SIZE] = {-16000, 32000};
 #endif
 
+//*************************************INITED STRUCT SPIx
+
+
 volatile uint8_t spi_rx_complete = 0;
 volatile uint8_t rx_counter = 0;
 volatile uint8_t tx_counter = 0;
 uint8_t err_flag = 0;
 uint8_t err_cnt = 0;
+
+
 
 void DMA1_Stream3_IRQHandler(void){
 	if((DMA1_Stream3) && (DMA_LISR_HTIF3)){
@@ -34,7 +39,16 @@ void DMA1_Stream4_IRQHandler(void){
 	NVIC_ClearPendingIRQ(DMA1_Stream4_IRQn);
 }
 
+void SPI1_IRQHandler(void) {
+
+	;
+}
+
+void IRQHandler(SPI_TypeDef *SPIx){
+	;
+}
 void SPI2_IRQHandler(void) {
+
 	if (READ_BIT(SPI2->SR, SPI_SR_RXNE)) {
 		uint16_t data = ((uint16_t)SPI2->DR) & 0xff;
 		TIM7->CNT = 0;
@@ -47,6 +61,7 @@ void SPI2_IRQHandler(void) {
 				SPI2->CR2 &= ~SPI_CR2_RXNEIE;
 				SPI2->CR2 &= ~SPI_CR2_TXEIE;
 				CS_HIGH;
+				w5500SPI.StartStop(w5500SPI.regs, SPI_OFF);
 			}else{
 				TIM7->CR1 |= TIM_CR1_CEN;
 				SPI2->CR2 &= ~SPI_CR2_RXNEIE;
@@ -67,6 +82,9 @@ void SPI2_IRQHandler(void) {
 	NVIC_ClearPendingIRQ(SPI2_IRQn);
 }
 
+void SPI3_IRQHandler(void) {
+;
+}
 
 void init_spi_gpio(void){
 
@@ -239,31 +257,63 @@ void init_spi_dma(void){
 
 }
 
-
 //MASTER_SPI2
-void SPI_init(void) {
+void SPI_init(struct SPI_* driver) {
 
 	init_spi_gpio();
 	//tick SPI bus & GPIOa
 	RCC->APB1ENR |= RCC_APB1ENR_SPI2EN;
+//	assert_param(IS_SPI_ALL_PERIPH(SPIx));
+	driver->regs->CR1 = (uint16_t)DEFAULT_SPI_SETTINGS;
+
 	//APB1 = 42Mhz => /8 = 4Mhz
 	SPI2->CR1 &= ~SPI_CR1_BR;
 	SPI2->CR1 |= SPI_CR1_BR_1;
-	//Second front signal detect
-	SPI2->CR1 |= SPI_CR1_CPHA;
-	SPI2->CR1 |= SPI_CR1_CPOL;
-	//Master
-	SPI2->CR1 |= SPI_CR1_MSTR;
+
+
+	//Front signal detect
+	switch(driver->SPI_InitStruct.SPI_Mode){
+		case SPI_MODE_0:
+			driver->regs->CR1 &= ~(SPI_CR1_CPHA | SPI_CR1_CPOL);
+			break;
+		case SPI_MODE_1:
+			driver->regs->CR1 |= SPI_CR1_CPHA;
+			break;
+		case SPI_MODE_2:
+			driver->regs->CR1 |= SPI_CR1_CPOL;
+			break;
+		case SPI_MODE_3:
+			driver->regs->CR1 |= (SPI_CR1_CPHA | SPI_CR1_CPOL);
+			break;
+		default:
+			driver->regs->CR1 &= ~(SPI_CR1_CPHA | SPI_CR1_CPOL);
+			break;
+	}
+
+	//Master|Slave
+	driver->regs->CR1 |= (driver->SPI_InitStruct.SPI_MS
+			| driver->SPI_InitStruct.SPI_DataSize
+			| driver->SPI_InitStruct.SPI_CS);
+//	SPI2->CR1 |= SPI_CR1_MSTR;
 	//Frame 16 bit
-	SPI2->CR1 &= ~SPI_CR1_DFF;
-	SPI2->CR1 |= SPI_CR1_DFF;
+//	SPI2->CR1 &= ~SPI_CR1_DFF;
+//	SPI2->CR1 |= SPI_CR1_DFF;
+
 	//Internal CS output
-	SPI2->CR1 |= SPI_CR1_SSM;
-	SPI2->CR1 |= SPI_CR1_SSI;
+//	SPI2->CR1 |= SPI_CR1_SSM;
+//	SPI2->CR1 |= SPI_CR1_SSI;
 
 #if SPI_2_INTERRUPT_ENB
-	NVIC_SetPriority(SPI2_IRQn, 5);
-	NVIC_EnableIRQ(SPI2_IRQn);
+	IRQn_Type myIRQ;
+	if(driver->regs == SPI1)
+		myIRQ = SPI1_IRQn;
+	else if(driver->regs == SPI2)
+		myIRQ = SPI2_IRQn;
+	else if(driver->regs == SPI3)
+		myIRQ = SPI3_IRQn;
+
+	NVIC_SetPriority(myIRQ, 5);
+	NVIC_EnableIRQ(myIRQ);
 #endif
 #if SPI_2_INTERRUPT_DMA_ENB
 	SPI2->CR2 |= SPI_CR2_RXDMAEN;
@@ -271,29 +321,44 @@ void SPI_init(void) {
 	init_spi_dma();
 #endif
 	//Enb SPI
-	SPI2->CR1 |= SPI_CR1_SPE;
+//	SPI2->CR1 |= SPI_CR1_SPE;
+}
+
+void SPI_StartStop(SPI_TypeDef *SPIx, SPI_WorkState SPI_State) {
+	if (SPI_State == SPI_OFF) {
+		while ((SPIx->SR & SPI_SR_TXE) == 0);
+		uint32_t timeout = 100000;
+		while (((SPIx->SR & SPI_SR_RXNE) == 0) && (--timeout != 0));
+		if (timeout == 0) {
+			// Dummy byte
+			SPIx->DR = 0xFF;
+		}
+		while ((SPIx->SR & SPI_SR_RXNE) == 0);
+		while (SPIx->SR & SPI_SR_BSY);
+		SPIx->CR1 &= ~SPI_CR1_SPE;
+	} else
+		SPIx->CR1 |= SPI_CR1_SPE;
+}
+
+uint8_t SPI_8Tx(SPI_TypeDef *SPIx, const uint8_t data) {
+
+	SPIx->DR = data;
+	while ((SPIx->SR & SPI_SR_TXE) == 0);
+	while ((SPIx->SR & SPI_SR_RXNE) == 0);
+
+	return (uint8_t) SPIx->DR;
 }
 
 
-uint8_t SPI_8Tx(const uint8_t data) {
-
-	SPI2->DR = data;
-	while ((SPI2->SR & SPI_SR_TXE) == 0);
-	while ((SPI2->SR & SPI_SR_RXNE) == 0);
-
-	return (uint8_t) SPI2->DR;
-}
-
-
-void SPI_16BitTx(const uint8_t address, const int16_t data){
+void SPI_16BitTx(SPI_TypeDef *SPIx, const uint8_t address, const int16_t data){
 
 	uint16_t msg_array[TX_DATA_SIZE] = {0};
 	msg_array[0] = (uint16_t)(address & 0x00ff);
 	msg_array[1] = (uint16_t)data & 0xffff;
 	CS_LOW;
 	for (int i = 0; i < TX_DATA_SIZE; ++i){
-		SPI2->DR = msg_array[i];
-		while((SPI2->SR & SPI_SR_TXE) == 0);
+		SPIx->DR = msg_array[i];
+		while((SPIx->SR & SPI_SR_TXE) == 0);
 	}
 	CS_HIGH;
 
@@ -317,7 +382,8 @@ void SPI_DMA_SendData(const uint8_t address, const int16_t *data){
 	ENABLE_SPI_DMA();
 }
 
-void SPI_16BitTxRx(const uint8_t address, const int16_t data, uint16_t *RxData){
+//const uint8_t address, const int16_t data, uint16_t *RxData
+void SPI_16BitTxRx(SPI_TypeDef *SPIx, const uint8_t address, const int16_t data, uint16_t *RxData){
 
 	uint16_t msg_array[TX_DATA_SIZE] = {0};
 	msg_array[0] = (uint16_t)(address & 0x00ff);
@@ -325,10 +391,10 @@ void SPI_16BitTxRx(const uint8_t address, const int16_t data, uint16_t *RxData){
 
 	CS_LOW;
 	for (int i = 0; i < TX_DATA_SIZE; ++i){
-		SPI2->DR = (uint16_t)msg_array[i];
-		while((SPI2->SR & SPI_SR_TXE) == 0);
-		while ((SPI2->SR & SPI_SR_RXNE) == 0);
-		RxData[i] = (uint16_t)SPI2->DR;
+		SPIx->DR = (uint16_t)msg_array[i];
+		while((SPIx->SR & SPI_SR_TXE) == 0);
+		while ((SPIx->SR & SPI_SR_RXNE) == 0);
+		RxData[i] = (uint16_t)SPIx->DR;
 	}
 	CS_HIGH;
 }
